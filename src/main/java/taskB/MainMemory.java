@@ -130,51 +130,45 @@ public class MainMemory {
 			return true;
 		} else {
 			BlockNode curr = start;
-			int index = -1;
-			int max = -5000;
-			int i = 0;
-
+			List<Block> blocks = null;
 			// look at all available slots/holes in memory
-			// select the position for the largest available block of memory that is
-			// suitable
-			// compare this search with the search done by bestfit
+			// select the first available position of suitable size for block
 			while (curr != null) {
-if (i == index) {
-                	
-                	//enough available space in memory identified 
-                    if (curr.getBlock().canPlace(block.getProcess())) {
+				if (curr.getBlock().canPlace(proc)) {
+					blocks.add(curr.getBlock());
+				}
+				Block smallestBlock;
+				int smallestSize = 0;
+				for (Block B : blocks) {
+					if (B.getSize() < smallestSize) {
+						smallestBlock = B;
+						smallestSize = B.getSize();
+					}
 
-                    	//get the end memory location for available block curr
-                        int end = curr.getBlock().getHole().getEnd();
-                        
-                        //add the process in memory
-                        curr.getBlock().setProcess(block.getProcess());
+				}
+			}
+		}
+		return false;
+	}
 
-                        //take only what we need from memory
-                        int block_start  = curr.getBlock().getHole().getStart();
-                        int memory_needs = block.getProcess().getArgument();
-                        curr.getBlock().getHole().setRange(block_start, block_start + memory_needs - 1);
+	public void joinBlocks() {
+		BlockNode ptr = start;
 
-                        //create a new block with the rest of memory we don't need
-                        //notice curr.getBlock().getHole().getEnd() was changed
-                        if (curr.getBlock().getHole().getEnd() < end) {
-                            BlockNode newBlock = new BlockNode(
-                                    new Block(null, new Hole(curr.getBlock().getHole().getEnd() + 1, end)),
-                                    curr.getNext());
+		while (ptr.getNext() != null) {
 
-                            curr.setNext(newBlock);
-                        }
-                        size++;
-                        return true;
-                    }
-                }
+			BlockNode next = ptr.getNext();
 
-                i++;
-                curr = curr.getNext();
-            }
-            return false;
-        }
-    }
+			if (ptr.getBlock().getProcess() == null && next.getBlock().getProcess() == null) {
+				int start = ptr.getBlock().getHole().getStart();
+				int end = next.getBlock().getHole().getEnd();
+				ptr.getBlock().getHole().setRange(start, end);
+				ptr.setNext(next.getNext());
+				size--;
+				continue;
+			}
+			ptr = ptr.getNext();
+		}
+	}
 
 	/**
 	 * TODO This method gets the external fragmentation of the current memory blocks

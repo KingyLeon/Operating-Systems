@@ -21,6 +21,7 @@ public class TaskB {
      * NOTE: you should read the process input from taskB.txt instead of putting it
      * in the Java file
      */
+    
     private static int[][] alloc = { /* memory size is 1024 */
 	    // Example 1
 	    /*
