@@ -7,9 +7,6 @@ import java.util.*;
 /**
  * 
  */
-/**
- * 
- */
 public class TaskA {
 
 	public static void main(String[] args) throws IOException {
@@ -17,97 +14,110 @@ public class TaskA {
 		System.out.println("Operating Systems Coursework");
 		System.out.println("Name: Leon King"); // display your name in here
 		System.out.println("Please enter your commands - cat, cut, sort, uniq, wc or |");
-		
-		// Create a writer thread
-        Thread writerThread = new Thread(() -> {
-            try {
-                String message = "Hello, Pipe!";
-                pos.write(message.getBytes());
-                pos.close(); // Close the output stream to signal end of data
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
-
-        // Create a reader thread
-        Thread readerThread = new Thread(() -> {
-            try {
-                int data;
-                while ((data = pis.read()) != -1) {
-                    System.out.print((char) data);
-                }
-                pis.close(); // Close the input stream
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        });
 
 		console();
 	}
 
 	public static void console() {
 		Scanner scanner = new Scanner(System.in);
-		String input = null;
-		while (input != "close") {
-			System.out.print(">> ");
-			input = scanner.nextLine().trim();
-			try {
+		String input = "";
+		try {
+			while (!input.equals("close")) {
+				System.out.print(">> ");
+				input = scanner.nextLine().trim();
 				execute(input);
-			} catch (IOException e) {
-				e.printStackTrace();
 			}
+			scanner.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		scanner.close();
 	}
 
 	// read the command from the terminal
 	public static void execute(String input) throws IOException {
 		String[] commands = input.split("\\|");
+		List<String> prevInput = null;
 
 		// Break command into functional tokens
 		for (int i = 0; i < commands.length; i++) {
 			String[] tokens = commands[i].trim().split(" ");
-			Process process;
 
 			if (i == 0) {
-				System.out.println(tokens[i]);
-				if (tokens[i].equals("cat")) {
-					cat(tokens[i + 1]);
-				} else if (tokens[i].equals("cut")) {
-					cut(tokens[i + 5], tokens[i + 2], tokens[i + 4].substring(1, tokens[i + 4].length() - 1));
-				} else if (tokens[i].equals("sort")) {
-					System.out.println("SORT ACCESSED");
-					sort(tokens[i + 1]);
-				} else if (tokens[i].equals("uniq")) {
-					uniq(tokens[i + 1]);
-				} else if (tokens[i].equals("wc")) {
-					if (!tokens[i + 1].equals("-l")) {
-						wc(tokens[i + 1], "null");
-					} else {
-						wc(tokens[i + 2], tokens[i + 1]);
+				List<String> lines = new ArrayList<>();
+
+				// Cat function
+				if (tokens[0].equals("cat")) {
+					lines = lineSplitter(tokens[1]);
+					prevInput = cat(lines);
+					// Cut Function
+				} else if (tokens[0].equals("cut")) {
+					String delim = ",";
+					lines = lineSplitter(tokens[tokens.length - 1]);
+
+					if (tokens[3].equals("-d")) {
+						delim = tokens[4].substring(1, tokens[4].length() - 1);
 					}
-				} else if (tokens[i].equals("|")) {
-					Pipe.SinkChannel pipe1;
+					prevInput = cut(lines, tokens[2], delim);
+					// Sort Function
+				} else if (tokens[0].equals("sort")) {
+					lines = lineSplitter(tokens[1]);
+					prevInput = sort(lines);
+					// Uniq Function
+				} else if (tokens[0].equals("uniq")) {
+					lines = lineSplitter(tokens[1]);
+					prevInput = uniq(lines);
+					// wc Function
+				} else if (tokens[0].equals("wc")) {
+					if (!tokens[1].equals("-l")) {
+						lines = lineSplitter(tokens[1]);
+						prevInput = wc(lines, "null");
+					} else {
+						lines = lineSplitter(tokens[2]);
+						prevInput = wc(lines, tokens[1]);
+					}
+				}
+			} else {
+				if (tokens[0].equals("cut")) {
+					String delim = ",";
+					if (tokens.length < 3) {
+						if (tokens[3].equals("-d")) {
+							delim = tokens[i + 4].substring(1, tokens[i + 4].length() - 1);
+						}
+					}
+					prevInput = cut(prevInput, tokens[2], delim);
+					// Sort Function
+				} else if (tokens[0].equals("sort")) {
+					prevInput = sort(prevInput);
+				} else if (tokens[0].equals("uniq")) {
+					prevInput = uniq(prevInput);
+				} else if (tokens[0].equals("wc")) {
+
+					if (tokens.length > 1) {
+						if (tokens[1].equals("-l")) {
+							prevInput = wc(prevInput, tokens[1]);
+						}
+					} else {
+						prevInput = wc(prevInput, "null");
+					}
 				}
 			}
 		}
 	}
 
 	// read the text file
-	public static void cat(String file) throws FileNotFoundException {
-		List<String> lines = new ArrayList<>();
-		lines = lineSplitter(file);
+	public static List<String> cat(List<String> lines) throws FileNotFoundException {
+		List<String> output = new ArrayList<>();
+
 		for (String x : lines) {
 			System.out.println(x);
+			output.add(x);
 		}
+		return output;
 	}
 
-	public static void cut(String file, String fieldN, String delim) {
+	public static List<String> cut(List<String> lines, String fieldN, String delim) {
 		int field = Integer.parseInt(fieldN);
-		List<String> lines = new ArrayList<>();
 		List<String> output = new ArrayList<>();
-		lines = lineSplitter(file);
-
 		for (String x : lines) {
 			String[] fields;
 			fields = x.split(delim);
@@ -116,41 +126,36 @@ public class TaskA {
 		for (String x : output) {
 			System.out.println(x);
 		}
+		return output;
 	}
 
-	public static void sort(String file) {
-		List<String> lines = new ArrayList<>();
-		lines = lineSplitter(file);
+	public static List<String> sort(List<String> lines) {
 		Collections.sort(lines);
+		List<String> output = new ArrayList<>();
 		for (String x : lines) {
 			System.out.println(x);
+			output.add(x);
 		}
+		return output;
 
 	}
 
-	public static void uniq(String file) {
-		BufferedReader reader;
-		List<String> lines = new ArrayList<>();
-		try {
-			reader = new BufferedReader(new FileReader(file));
-			String line;
-			while ((line = reader.readLine()) != null) {
-				if (!lines.contains(line)) {
-					lines.add(line);
-				}
+	public static List<String> uniq(List<String> lines) {
+		List<String> output = new ArrayList<>();
+		for (String x : lines) {
+			if (!output.contains(x)) {
+				output.add(x);
 			}
-			reader.close();
-			for (String x : lines) {
-				System.out.println(x);
-			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
+		for (String x : lines) {
+			System.out.println(x);
+			output.add(x);
+		}
+		return output;
 	}
 
-	public static void wc(String file, String param) {
-		List<String> lines = new ArrayList<>();
-		lines = lineSplitter(file);
+	public static List<String> wc(List<String> lines, String param) {
+		List<String> output = new ArrayList<>();
 		int lineNum = 0;
 		int charNum = 0;
 		int wordNum = 0;
@@ -158,17 +163,23 @@ public class TaskA {
 
 		if (param.equals("-l")) {
 			// return only line size
-			System.out.println(lineNum + " " + file);
+			System.out.println(lineNum);
 		} else {
 			for (String x : lines) {
-				wordNum += x.split("\s+").length;
-				for (char y : x.toCharArray()) {
-					charNum++;
-				}
+	            String[] words = x.split("\\s+");
+	            wordNum += words.length;
+	            charNum += x.length();
 			}
-			System.out.println(lineNum + " " + wordNum + " " + charNum + " " + file);
+			System.out.println(lineNum + " " + wordNum + " " + charNum + " ");
 		}
+		String lineOut = "" + lineNum;
+		String charOut = "" + charNum;
+		String wordOut = "" + wordNum;
 
+		output.add(lineOut);
+		output.add(charOut);
+		output.add(wordOut);
+		return output;
 	}
 
 	public static List<String> lineSplitter(String file) {
