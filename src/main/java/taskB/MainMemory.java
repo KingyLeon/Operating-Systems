@@ -101,7 +101,6 @@ public class MainMemory {
 					if (curr.getBlock().getHole().getEnd() < end) {
 						BlockNode newBlock = new BlockNode(
 								new Block(null, new Hole(curr.getBlock().getHole().getEnd() + 1, end)), curr.getNext());
-
 						curr.setNext(newBlock);
 					}
 					size++;
@@ -130,25 +129,43 @@ public class MainMemory {
 			return true;
 		} else {
 			BlockNode curr = start;
-			List<Block> blocks = null;
+			List<BlockNode> blockNodes = new ArrayList<>();
 			// look at all available slots/holes in memory
-			// select the first available position of suitable size for block
 			while (curr != null) {
 				if (curr.getBlock().canPlace(proc)) {
-					blocks.add(curr.getBlock());
+					blockNodes.add(curr);
 				}
-				Block smallestBlock;
-				int smallestSize = 0;
-				for (Block B : blocks) {
-					if (B.getSize() < smallestSize) {
-						smallestBlock = B;
-						smallestSize = B.getSize();
-					}
+				curr = curr.getNext();
+			}
 
+			BlockNode smallestBlockNode = null;
+			int smallestSize = Integer.MAX_VALUE;
+			for (BlockNode B : blockNodes) {
+				if (B.getBlock().getHole().getSize() < smallestSize) {
+					smallestBlockNode = B;
+					smallestSize = B.getBlock().getHole().getSize();
 				}
 			}
+
+			if (smallestBlockNode != null) {
+				int end = smallestBlockNode.getBlock().getHole().getEnd();
+				smallestBlockNode.getBlock().setProcess(block.getProcess());
+
+				int start = smallestBlockNode.getBlock().getHole().getStart();
+				int memory = block.getProcess().getArgument();
+				smallestBlockNode.getBlock().getHole().setRange(start, start + memory - 1);
+
+				if (smallestBlockNode.getBlock().getHole().getEnd() < end) {
+					BlockNode newBlock = new BlockNode(
+							new Block(null, new Hole(smallestBlockNode.getBlock().getHole().getEnd() + 1, end)),
+							smallestBlockNode.getNext());
+					smallestBlockNode.setNext(newBlock);
+				}
+				size++;
+				return true;
+			}
+			return false;
 		}
-		return false;
 	}
 
 	public void joinBlocks() {
@@ -180,7 +197,65 @@ public class MainMemory {
 		BlockNode ptr = start;
 		int externalFragmentation = 0;
 
+		while (ptr != null) {
+			if (ptr.getBlock().getProcess() == null) {
+				externalFragmentation += ptr.getBlock().getHole().getSize();
+			}
+			ptr = ptr.getNext();
+		}
 		return externalFragmentation;
+	}
+	
+	public int spaceBetweenBlocks() {
+		BlockNode ptr = start;
+		int externalFragmentation = 0;
+
+		while (ptr != null && ptr.getNext() != null) {
+			if (ptr.getBlock().getProcess() == null) {
+				externalFragmentation += ptr.getBlock().getHole().getSize();
+			}
+			ptr = ptr.getNext();
+		}
+		return externalFragmentation;
+	}
+
+	/**
+	 * TODO Compaction, this method reduces the external fragmentation of the
+	 * current memory blocks
+	 */
+
+	public boolean compaction() {
+		BlockNode ptr = start;
+		boolean compact = false;
+		while (ptr != null && ptr.getNext() != null) {
+			Block currentB = ptr.getBlock();
+			Block nextB = ptr.getNext().getBlock();
+
+			// If Free space, assign it the process from the next block and adjust size
+			if (ptr.getBlock().getProcess() == null) {
+				System.out.println(ptr.getBlock().toString());
+				int newStart = ptr.getBlock().getHole().getStart();
+				int newSize = ptr.getNext().getBlock().getHole().getSize();
+
+				currentB.getHole().setRange(newStart, newStart + newSize - 1);
+				currentB.setProcess(ptr.getNext().getBlock().getProcess());
+				ptr.setBlock(currentB);
+				nextB.setProcess(null);
+				nextB.getHole().setRange(newStart + newSize, ptr.getNext().getBlock().getHole().getEnd());
+				ptr.getNext().setBlock(nextB);
+
+				joinBlocks();
+			}
+			ptr = ptr.getNext(); // Move to the next block
+		}
+		
+		if (spaceBetweenBlocks() == 0) {
+			compact = true;
+		}
+		else {
+			compact = false;
+		}
+		return compact;
 	}
 
 	/**

@@ -1,4 +1,4 @@
-# After the memory access 0x0FFF
+# After the memory access 0x0FDA
 #Address, Result (Hit, Miss, PageFault)
 0x0FDA,Miss	
 #updated TLB

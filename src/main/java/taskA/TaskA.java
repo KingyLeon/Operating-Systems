@@ -197,6 +197,5 @@ public class TaskA {
 			e.printStackTrace();
 		}
 		return lines;
-
 	}
 }
