@@ -233,7 +233,6 @@ public class MainMemory {
 
 			// If Free space, assign it the process from the next block and adjust size
 			if (ptr.getBlock().getProcess() == null) {
-				System.out.println(ptr.getBlock().toString());
 				int newStart = ptr.getBlock().getHole().getStart();
 				int newSize = ptr.getNext().getBlock().getHole().getSize();
 

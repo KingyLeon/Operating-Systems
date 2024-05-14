@@ -1,4 +1,4 @@
-package taskB;
+ package taskB;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -133,9 +133,16 @@ public class TaskB {
 		}
 
 		for (Process proc : unaddedProcesses) {
+			
+			System.out.println("Request " + proc.getReference_number() + " failed at allocating "
+					+ proc.getArgument() + " bytes.");
+			System.out.println("External Fragmentation is " + manager.externalFragmentation() + " bytes.");
+			manager.printBlocks();
+			
 			manager.compaction();
 			boolean placed = manager.bestFitInsert(proc);
 			if (!placed) {
+				System.out.println("-------After Compaction ------");
 				System.out.println("Request " + proc.getReference_number() + " failed at allocating "
 						+ proc.getArgument() + " bytes.");
 				System.out.println("External Fragmentation is " + manager.externalFragmentation() + " bytes.");

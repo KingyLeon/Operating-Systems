@@ -6,6 +6,8 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -23,29 +25,36 @@ public class TaskC {
 		List<String[]> TLBEntries = Retrieve_TLB_Entries("TaskC.txt");
 		List<String[]> pageEntries = Retrieve_PageTable_Entries("TaskC.txt");
 
+		// Clear output file
+		BufferedWriter writer;
+		try {
+			writer = Files.newBufferedWriter(Paths.get("taskc-sampleoutput.txt"));
+			writer.write("");
+			writer.flush();
+		} catch (IOException e) {
+
+		}
+
 		for (String address : virtualAddresses) {
 			String pageNum = address.substring(2, 3);
 			Boolean checkTLB = checkTLB(TLBEntries, pageNum);
 			Boolean checkPageFault = checkForPageFault(pageEntries, TLBEntries, pageNum);
 			String result = getResult(checkTLB, checkPageFault);
-			System.out.println(result);
 			TLBEntries = changeTLB(result, pageNum, TLBEntries, pageEntries);
 			buildOutput(address, pageNum, result, TLBEntries, pageEntries, "taskc-sampleoutput.txt");
 
+			System.out.println("TLB After the memory access " + address);
 			for (String[] x : TLBEntries) {
 				System.out.println(x[0] + ", " + x[1] + ", " + x[2] + "," + x[3]);
 			}
 		}
 
 		List<String> output = lineSplitter("taskc-sampleoutput.txt");
-
 	}
 
 	public static List<String[]> changeLRU(List<String[]> TLB, String pageNum) {
 		for (String[] row : TLB) {
-			System.out.println(row[1] + " n " + pageNum);
 			if (row[1].equals(pageNum)) {
-
 				int TLBVal = Integer.parseInt(row[3]);
 				row[3] = "5";
 
@@ -95,7 +104,7 @@ public class TaskC {
 		return Row;
 	}
 
-	// The output for the file
+	// Build the output for the file
 	public static void buildOutput(String address, String pageNum, String result, List<String[]> TLB,
 			List<String[]> pageEntries, String file) {
 		BufferedWriter writer;
@@ -171,11 +180,17 @@ public class TaskC {
 			reader = new BufferedReader(new FileReader(file));
 			String line;
 			int lineNumber = 0;
+			/*
+			 * while ((line = reader.readLine()) != null) { if (lineNumber > 15 &&
+			 * lineNumber < 28) { entries.add(line.trim().split(",")); } lineNumber++; }
+			 */
+			boolean pageTable = false;
 			while ((line = reader.readLine()) != null) {
-				if (lineNumber > 15 && lineNumber < 28) {
+				if (pageTable) {
 					entries.add(line.trim().split(","));
+				} else if (line.trim().equals(("#Index,Valid,Physical Page or On Disk").trim())) {
+					pageTable = true;
 				}
-				lineNumber++;
 			}
 			reader.close();
 		} catch (FileNotFoundException e) {
@@ -194,35 +209,22 @@ public class TaskC {
 			reader = new BufferedReader(new FileReader(file));
 			String line;
 			Boolean pageTable = false;
-			int lineNumber = 0;
 			while ((line = reader.readLine()) != null) {
+				if (line.equals("#Initial Page table")) {
+					break;
+				}
 				if (pageTable) {
 					entries.add(line.split(","));
-					System.out.println("Added");
-				}
-				else if (line.trim().equals(("#Valid, Tag, Physical Page #, LRU").trim())) {
+				} else if (line.trim().equals(("#Valid, Tag, Physical Page #, LRU").trim())) {
 					pageTable = true;
 				}
-				if (line.equals("#Initial Page table"))
-					break;
-			} 
-		/*	while ((line = reader.readLine()) != null) {
-				if (lineNumber > 9 && lineNumber < 14) {
-					entries.add(line.split(","));
-				}
-				lineNumber++;
-			} */
+			}
 			reader.close();
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		/*
-		for(String[] x : entries) {
-			for (String y : x)
-			System.out.println(y + "+");
-		} */
 		return entries;
 	}
 
