@@ -41,7 +41,6 @@ public class TaskA {
 		// Break command into functional tokens
 		for (int i = 0; i < commands.length; i++) {
 			String[] tokens = commands[i].trim().split(" ");
-
 			if (i == 0) {
 				List<String> lines = new ArrayList<>();
 
@@ -49,6 +48,7 @@ public class TaskA {
 				if (tokens[0].equals("cat")) {
 					lines = lineSplitter(tokens[1]);
 					prevInput = cat(lines);
+
 					// Cut Function
 				} else if (tokens[0].equals("cut")) {
 					String delim = ",";
@@ -58,14 +58,17 @@ public class TaskA {
 						delim = tokens[4].substring(1, tokens[4].length() - 1);
 					}
 					prevInput = cut(lines, tokens[2], delim);
+
 					// Sort Function
 				} else if (tokens[0].equals("sort")) {
 					lines = lineSplitter(tokens[1]);
 					prevInput = sort(lines);
+
 					// Uniq Function
 				} else if (tokens[0].equals("uniq")) {
 					lines = lineSplitter(tokens[1]);
 					prevInput = uniq(lines);
+
 					// wc Function
 				} else if (tokens[0].equals("wc")) {
 					if (!tokens[1].equals("-l")) {
@@ -91,7 +94,6 @@ public class TaskA {
 				} else if (tokens[0].equals("uniq")) {
 					prevInput = uniq(prevInput);
 				} else if (tokens[0].equals("wc")) {
-
 					if (tokens.length > 1) {
 						if (tokens[1].equals("-l")) {
 							prevInput = wc(prevInput, tokens[1]);
@@ -102,44 +104,85 @@ public class TaskA {
 				}
 			}
 		}
+		for (String x : prevInput) {
+			System.out.println(x);
+		}
 	}
 
-	// read the text file
+	// Return list containing each line of text file
 	public static List<String> cat(List<String> lines) throws FileNotFoundException {
 		List<String> output = new ArrayList<>();
 
 		for (String x : lines) {
-			System.out.println(x);
+			// System.out.println(x);
 			output.add(x);
 		}
 		return output;
 	}
 
+	// Return a list of fields from specified columns
 	public static List<String> cut(List<String> lines, String fieldN, String delim) {
-		int field = Integer.parseInt(fieldN);
-		List<String> output = new ArrayList<>();
-		for (String x : lines) {
-			String[] fields;
-			fields = x.split(delim);
-			output.add(fields[field]);
+		String[] splitField = null;
+		String state = "normal";
+		int num1 = 0;
+		int num2 = 0;
+		if (fieldN.contains("-")) {
+			splitField = fieldN.split("-");
+			 num1 = (Integer.parseInt(splitField[0]) - 1);
+			 num2 = (Integer.parseInt(splitField[1]) - 1);
+			state = "range";
 		}
-		for (String x : output) {
-			System.out.println(x);
+		if (fieldN.contains(",")) {
+			splitField = fieldN.split(",");
+			 num1 = (Integer.parseInt(splitField[0]) - 1);
+			 num2 = (Integer.parseInt(splitField[1]) - 1);
+			state = "select";
+		}
+		List<String> output = new ArrayList<>();
+
+		// returns an interval of columns
+		if (state.equals("range")) {
+			for (String x : lines) {
+				String[] fields;
+				fields = x.split(delim);
+				
+				String concat = "";
+				for (int i = num1; i <= num2; i++) {
+					concat +=fields[i] + ",";
+				}
+				output.add(concat.substring(0, concat.length() -1));
+			}
+			//returns selected columns
+		} else if (state.equals("select")) {
+			for (String x : lines) {
+				String[] fields;
+				fields = x.split(delim);
+
+				output.add(fields[num1] + "," + fields[num2]);
+			}
+		} else {
+			int field = Integer.parseInt(fieldN);
+			for (String x : lines) {
+				String[] fields;
+				fields = x.split(delim);
+				output.add(fields[field - 1]);
+			}
 		}
 		return output;
 	}
 
+	// Return a list of lines sorted alphanumerically
 	public static List<String> sort(List<String> lines) {
 		Collections.sort(lines);
 		List<String> output = new ArrayList<>();
 		for (String x : lines) {
-			System.out.println(x);
+			// System.out.println(x);
 			output.add(x);
 		}
 		return output;
 
 	}
-
+	// Return a list of unique lines
 	public static List<String> uniq(List<String> lines) {
 		List<String> output = new ArrayList<>();
 		for (String x : lines) {
@@ -147,41 +190,40 @@ public class TaskA {
 				output.add(x);
 			}
 		}
-		for (String x : lines) {
-			System.out.println(x);
-			output.add(x);
-		}
 		return output;
 	}
-
+	// Return a count of lines, or words characters and lines
 	public static List<String> wc(List<String> lines, String param) {
 		List<String> output = new ArrayList<>();
 		int lineNum = 0;
 		int charNum = 0;
 		int wordNum = 0;
+		String lineOut;
+		String charOut;
+		String wordOut;
 		lineNum = lines.size();
 
+		// return only line size
 		if (param.equals("-l")) {
-			// return only line size
-			System.out.println(lineNum);
+			output.add("" + lineNum);
+
 		} else {
 			for (String x : lines) {
-	            String[] words = x.split("\\s+");
-	            wordNum += words.length;
-	            charNum += x.length();
+				String[] words = x.split("\\s+");
+				wordNum += words.length;
+				charNum += x.length();
 			}
-			System.out.println(lineNum + " " + wordNum + " " + charNum + " ");
+			lineOut = "" + lineNum;
+			charOut = "" + charNum;
+			wordOut = "" + wordNum;
+			output.add(lineOut + " " + charOut + " " + wordOut);
+			// output.add(charOut);
+			// output.add(wordOut);
 		}
-		String lineOut = "" + lineNum;
-		String charOut = "" + charNum;
-		String wordOut = "" + wordNum;
-
-		output.add(lineOut);
-		output.add(charOut);
-		output.add(wordOut);
 		return output;
 	}
 
+	// Function to help split a file into a list of strings
 	public static List<String> lineSplitter(String file) {
 		BufferedReader reader;
 		List<String> lines = new ArrayList<>();

@@ -20,8 +20,6 @@ public class TaskC {
 	public static void main(String[] args) {
 		// Your code here.
 		List<String> virtualAddresses = readTable("TaskC.txt");
-		List<String> pageNumber = pageNumbers(virtualAddresses);
-		List<String> offset;
 		List<String[]> TLBEntries = Retrieve_TLB_Entries("TaskC.txt");
 		List<String[]> pageEntries = Retrieve_PageTable_Entries("TaskC.txt");
 
@@ -32,7 +30,7 @@ public class TaskC {
 			writer.write("");
 			writer.flush();
 		} catch (IOException e) {
-
+			e.printStackTrace();
 		}
 
 		for (String address : virtualAddresses) {
@@ -44,12 +42,12 @@ public class TaskC {
 			buildOutput(address, pageNum, result, TLBEntries, pageEntries, "taskc-sampleoutput.txt");
 
 			System.out.println("TLB After the memory access " + address);
+			System.out.println("Result: " + result);
+
 			for (String[] x : TLBEntries) {
 				System.out.println(x[0] + ", " + x[1] + ", " + x[2] + "," + x[3]);
 			}
 		}
-
-		List<String> output = lineSplitter("taskc-sampleoutput.txt");
 	}
 
 	public static List<String[]> changeLRU(List<String[]> TLB, String pageNum) {
