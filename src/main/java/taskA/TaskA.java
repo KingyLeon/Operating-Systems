@@ -217,8 +217,6 @@ public class TaskA {
 			charOut = "" + charNum;
 			wordOut = "" + wordNum;
 			output.add(lineOut + " " + charOut + " " + wordOut);
-			// output.add(charOut);
-			// output.add(wordOut);
 		}
 		return output;
 	}

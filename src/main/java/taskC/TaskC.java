@@ -14,9 +14,6 @@ import java.util.List;
 
 public class TaskC {
 
-	// MAY HAVE TO EDIT PAGE TABLE FOR VALUE OF VALID
-	// ENSURE YOU ARE USING PAGENUM APPROPRIATELY
-
 	public static void main(String[] args) {
 		// Your code here.
 		List<String> virtualAddresses = readTable("TaskC.txt");
@@ -33,6 +30,7 @@ public class TaskC {
 			e.printStackTrace();
 		}
 
+		// Process ran for each address
 		for (String address : virtualAddresses) {
 			String pageNum = address.substring(2, 3);
 			Boolean checkTLB = checkTLB(TLBEntries, pageNum);
@@ -49,7 +47,8 @@ public class TaskC {
 			}
 		}
 	}
-
+	
+	// Changes value of all LRU, returns altered TLB
 	public static List<String[]> changeLRU(List<String[]> TLB, String pageNum) {
 		for (String[] row : TLB) {
 			if (row[1].equals(pageNum)) {
@@ -66,7 +65,7 @@ public class TaskC {
 		}
 		return TLB;
 	}
-
+	// Alters row in TLB, returns the altered TLB table
 	public static List<String[]> changeTLB(String result, String pageNum, List<String[]> TLB,
 			List<String[]> pageEntries) {
 		if (result.equals("Hit")) {
@@ -91,7 +90,7 @@ public class TaskC {
 		}
 		return TLB;
 	}
-
+	// Searches pageTable for appropriate row, returns fields of row
 	public static String[] searchPageTable(List<String[]> pageEntries, String pageNum) {
 		String[] Row = null;
 		for (String[] row : pageEntries) {
@@ -226,7 +225,7 @@ public class TaskC {
 		return entries;
 	}
 
-	// Retrieve the pageNumbers
+	// Return a list of the pageNumbers
 	public static List<String> pageNumbers(List<String> addresses) {
 		List<String> pageNumbers = new ArrayList<>();
 		for (String address : addresses) {
